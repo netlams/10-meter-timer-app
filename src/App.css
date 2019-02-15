@@ -38,37 +38,46 @@ body {
   background-color: #333;
 }
 
+button {
+  margin-top: 10px;
+}
+
 #countdown {
   position: relative;
   margin: auto;
   margin-top: 100px;
-  height: 40px;
-  width: 40px;
+  margin-bottom: 50px;
+  height: 220px;
+  width: 205px;
   text-align: center;
 }
 
 #countdown-number {
   color: white;
   display: inline-block;
-  line-height: 40px;
+  line-height: 205px;
 }
 
 svg {
   position: absolute;
   top: 0;
   right: 0;
-  width: 40px;
-  height: 40px;
+  width: 205px;
+  height: 205px;
   transform: rotateY(-180deg) rotateZ(-90deg);
 }
 
 svg circle {
-  stroke-dasharray: 113px;
+  stroke-dasharray: 15px;
   stroke-dashoffset: 0px;
   stroke-linecap: round;
-  stroke-width: 2px;
+  stroke-width: 3px;
   stroke: white;
   fill: none;
+  
+}
+
+.spinning {
   animation: countdown 10s linear infinite forwards;
 }
 
@@ -77,6 +86,10 @@ svg circle {
     stroke-dashoffset: 0px;
   }
   to {
-    stroke-dashoffset: 113px;
+    stroke-dashoffset: 150px;
   }
+}
+
+.white-bg {
+  background-color: white;
 }
