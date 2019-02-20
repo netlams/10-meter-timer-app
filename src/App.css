@@ -90,6 +90,7 @@ svg circle {
   }
 }
 
-.white-bg {
+.table-bg {
   background-color: white;
+  opacity: 0.9;
 }
