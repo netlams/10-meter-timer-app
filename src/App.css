@@ -45,9 +45,9 @@ button {
 #countdown {
   position: relative;
   margin: auto;
-  margin-top: 100px;
-  margin-bottom: 50px;
-  height: 220px;
+  margin-top: 50px;
+  margin-bottom: 70px;
+  height: 200px;
   width: 205px;
   text-align: center;
 }
@@ -93,4 +93,8 @@ svg circle {
 .table-bg {
   background-color: white;
   opacity: 0.9;
+}
+
+.display-1 {
+  color: white;
 }

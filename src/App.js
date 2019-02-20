@@ -2,15 +2,178 @@ import React, { Component } from 'react';
 import './App.css';
 
 class App extends Component {
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      activeTab: "self-selected",
+      selfSelectedTrials: [{
+        id: null,
+        value: null,
+        notes: null,
+        type: null
+      }],
+      fastTrials: [{
+        id: null,
+        value: null,
+        notes: null,
+        type: null
+      }]
+    };
+  }
+
+  setActiveTab(tabName) {
+    this.setState({
+      activeTab: tabName,
+      selfSelectedTrials: this.state.selfSelectedTrials,
+      fastTrials: this.state.fastTrials
+    });
+  }
+
+  pushTrial(trial) {
+    trial.type = this.state.activeTab;
+
+    // Push to the active state's array
+    if (this.state.activeTab == 'self-selected') {
+      let trials = this.state.selfSelectedTrials.slice();
+      trial.id = this.state.selfSelectedTrials.length;
+      trials.push(trial);
+
+      // set state
+      this.setState({
+        activeTab: this.state.activeTab,
+        selfSelectedTrials: trials,
+        fastTrials: this.state.fastTrials
+      });
+    }
+    else {
+      let trials = this.state.fastTrials.slice();
+      trial.id = this.state.fastTrials.length;
+      trials.push(trial);
+
+      // set state
+      this.setState({
+        activeTab: this.state.activeTab,
+        selfSelectedTrials: this.state.selfSelectedTrials,
+        fastTrials: trials
+      });
+    }
+  }
+
+  resetActiveTabTrials() {
+    // Look at the current active tab and empty/reset the array
+    if (this.state.activeTab == 'self-selected') {
+      let trials = this.state.selfSelectedTrials.slice();
+      // start at 1 (trial starts 1)
+      trials.length = 1;
+
+      // Set state
+      this.setState({
+        activeTab: this.state.activeTab,
+        selfSelectedTrials: trials,
+        fastTrials: this.state.fastTrials
+      });
+    }
+    else {
+      let trials = this.state.fastTrials.slice();
+      // start at 1 (trial starts 1)
+      trials.length = 1;
+
+      // Set state
+      this.setState({
+        activeTab: this.state.activeTab,
+        selfSelectedTrials: this.state.selfSelectedTrials,
+        fastTrials: trials
+      });
+    }
+  }
 
   render() {
     return (
       <div className="App container-fluid">
         <h1 className="display-1">10-Meter Timed Tool</h1>
-        <Timer />
-        <TrialTable />
+        <Timer pushTrialEvent={this.pushTrial.bind(this)} />
+        <TrialTable 
+            selfSelectedTrialsData={this.state.selfSelectedTrials} 
+            fastTrialsData={this.state.fastTrials} 
+            setActiveTabEvent={this.setActiveTab.bind(this)} 
+            resetActiveTabTrialsEvent={this.resetActiveTabTrials.bind(this)} />
       </div>
     );
+  }
+}
+
+
+class TrialTable extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      selfSelectedAvgTime: 0,
+      fastAvgTime: 0,
+      selfSelectedVelocity: 0,
+      fastVelocity: 0
+    };
+  }
+
+  calculateAverageTime(data) {
+    let i, sum=0, avg=0;
+    let length = data.length-1; // get rid of empty index 0 
+
+    if (length === 0) {
+      return 0;
+    }
+    for (i = 1; i <= length; i++) {
+      sum+=parseFloat(data[i].value);
+    }
+    avg = sum/length;
+    return avg;
+  }
+
+  calculateActualVelocity(data) {
+     let avg = this.calculateAverageTime(data), velocity=0;
+     velocity = avg/6;
+     return velocity;
+  }
+
+  calculateAverageTimeForBothDataset() {
+    let selfSelectedAvgTime = this.calculateAverageTime(this.props.selfSelectedTrialsData);
+    let fastAvgTime = this.calculateAverageTime(this.props.fastTrialsData);
+
+    this.setState({
+      selfSelectedAvgTime: selfSelectedAvgTime,
+      fastAvgTime: fastAvgTime
+    });
+  }
+
+  calculateActualVelocityForBothDataset() {
+    let selfSelectedVelocity = this.calculateActualVelocity(this.props.selfSelectedTrialsData).toFixed(2);
+    let fastVelocity = this.calculateActualVelocity(this.props.fastTrialsData).toFixed(2);
+
+    this.setState({
+      selfSelectedVelocity: selfSelectedVelocity,
+      fastVelocity: fastVelocity
+    });
+  }
+
+  render() {
+    return(
+      <div id="trial-table" className="container-fluid table-bg">
+        <DateMsg />
+        <TabNav setActiveTabEvent={this.props.setActiveTabEvent} />
+        <TabContent 
+            selfSelectedTrialsData={this.props.selfSelectedTrialsData} 
+            fastTrialsData={this.props.fastTrialsData} 
+            resetActiveTabTrialsEvent={this.props.resetActiveTabTrialsEvent} />
+        <AverageTimeStat 
+            selfSelectedAvgTime={this.state.selfSelectedAvgTime} 
+            fastAvgTime={this.state.fastAvgTime} 
+            buttonEvent={this.calculateAverageTimeForBothDataset.bind(this)} />
+        <ActualVelocityStat 
+            selfSelectedVelocity={this.state.selfSelectedVelocity} 
+            fastVelocity={this.state.fastVelocity} 
+            buttonEvent={this.calculateActualVelocityForBothDataset.bind(this)} />
+      </div>
+      );
   }
 }
 
@@ -19,7 +182,7 @@ class Timer extends Component {
     super(props);
     this.state = {
       elapsed: 0,
-      isTiming: false,
+      isTiming: false
     };
   }
 
@@ -30,7 +193,6 @@ class Timer extends Component {
     }
     else {
       this.stop();
-      
     }
   }
 
@@ -54,12 +216,19 @@ class Timer extends Component {
 
   stop() {
     console.log("Stopped");
+    let date = new Date();
+    let todayDate = date.getMonth() + "/" + date.getDate() + "/" + date.getFullYear();
     let {elapsed, isTiming} = this.state;
 
     this.setState({
       isTiming: false
     });
     clearInterval(this.timer);
+
+    this.props.pushTrialEvent({
+        value: elapsed,
+        notes: todayDate,
+      });
   }
 
   reset() {
@@ -83,7 +252,7 @@ class Timer extends Component {
 
     let stopBtn = (this.state.isTiming) ? 
       <button type="button" className="btn btn-warning"
-        onClick={() => this.stop()}>Stop</button> : null;
+        onClick={() => this.stop()}>Stop & Record</button> : null;
 
     return (
       <div id="countdown" className="container">
@@ -102,7 +271,7 @@ class Timer extends Component {
 class DateMsg extends Component {
   render() {
     let date = new Date();
-    let todayDate = date.getMonth() + "/" + date.getDate();
+    let todayDate = date.getMonth() + "/" + date.getDate() + "/" + date.getFullYear();
 
     return (
       <div className="row">
@@ -113,13 +282,19 @@ class DateMsg extends Component {
 }
 
 class TabNav extends Component {
+
+  setActiveTab(tabName) {
+    console.log("set active: " + tabName);
+    this.props.setActiveTabEvent(tabName);
+  };
+
   render() {
     return (
         <ul className="nav nav-tabs" id="myTab" role="tablist">
-          <li className="nav-item">
+          <li className="nav-item" onClick={() => this.setActiveTab("self-selected")} >
             <a className="nav-link active" id="ss-tab" data-toggle="tab" href="#ss" role="tab" aria-controls="ss" aria-selected="true">Self-Selected Velocity</a>
           </li>
-          <li className="nav-item">
+          <li className="nav-item" onClick={() => this.setActiveTab("fast")} >
             <a className="nav-link" id="fast-tab" data-toggle="tab" href="#fast" role="tab" aria-controls="fast" aria-selected="false">Fast Velocity</a>
           </li>
         </ul>
@@ -128,22 +303,18 @@ class TabNav extends Component {
 }
 
 class TabContent extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      trials: [{
-        id: 1,
-        value: 50.0,
-        notes: "hi"
-      }]
-    };
-  }
 
   render() {
-    let {trials} = this.state;
 
+    const selfSelectedItems = this.props.selfSelectedTrialsData.map((item, key) =>
+        <tr key={item.id}>
+          <th scope="row">{item.id}</th>
+          <td>{item.value}</td>
+          <td>{item.notes}</td>
+        </tr>
+      );
 
-    const items = trials.map((item, key) =>
+    const fastItems = this.props.fastTrialsData.map((item, key) =>
         <tr key={item.id}>
           <th scope="row">{item.id}</th>
           <td>{item.value}</td>
@@ -152,8 +323,6 @@ class TabContent extends Component {
       );
 
     return (
-      
-
       <div className="tab-content" id="myTabContent">
         <div className="tab-pane fade show active" id="ss" role="tabpanel" aria-labelledby="ss-tab">
           <table className="table table-sm table-hover table-borderless">
@@ -165,12 +334,9 @@ class TabContent extends Component {
               </tr>
             </thead>
             <tbody>
-              {items}
-            </tbody>
-
-            
+              {selfSelectedItems}
+            </tbody>   
           </table>
-          <button type="button" className="btn btn-danger" >Reset All Trials</button>
         </div>
 
         <div className="tab-pane fade" id="fast" role="tabpanel" aria-labelledby="fast-tab">
@@ -183,27 +349,11 @@ class TabContent extends Component {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <th scope="row">1</th>
-                <td>20.01</td>
-                <td>...</td>
-              </tr>
-              <tr>
-                <th scope="row">2</th>
-                <td>20.02</td>
-                <td>...</td>
-              </tr>
-              <tr>
-                <th scope="row">3</th>
-                <td>25.12</td>
-                <td>...</td>
-              </tr>
+              {fastItems}
             </tbody>
-
-            
           </table>
-          <button type="button" className="btn btn-danger" >Reset All Trials</button>
         </div>
+        <button type="button" className="btn btn-danger" onClick={() => this.props.resetActiveTabTrialsEvent()} >Reset Trials</button>
       </div>
       );
   }
@@ -214,59 +364,41 @@ class AverageTimeStat extends Component {
     return (
       <div className="row">  
         <div className="col-sm">
-          <label>Self-Selected Average Time: 50.0</label>
+          <label>Self-Selected Average Time: {this.props.selfSelectedAvgTime}</label>
         </div>
         <div>
-          <label>Fast Average Time: 25.0</label>
+          <label>Fast Average Time: {this.props.fastAvgTime}</label>
         </div>
         <div className="col-sm">
-          <button type="button" className="btn btn-light" >Generate Average Time (Both)</button>
+          <button 
+              onClick={() => this.props.buttonEvent()} 
+              type="button" 
+              className="btn btn-light">Generate Average Time (Both)</button>
         </div>
       </div>
       );
   }
 }
 
-class AverageVelocityStat extends Component {
+class ActualVelocityStat extends Component {
    render() {
     return (
       <div className="row">
         <div className="col-sm">
-          <label>Self-Selected Actual Velocity 8.33 m/s</label>
+          <label>Self-Selected Actual Velocity {this.props.selfSelectedVelocity} m/s</label>
         </div>
         <div>
-          <label>Fast Actual Velocity 5.33 m/s</label>
+          <label>Fast Actual Velocity {this.props.fastVelocity} m/s</label>
         </div>
         <div className="col-sm">
-          <button type="button" className="btn btn-light" >Generate Actual Velocity (Both)</button>  
+          <button 
+              onClick={() => this.props.buttonEvent()} 
+              type="button" 
+              className="btn btn-light" >Generate Actual Velocity (Both)</button>  
         </div>
       </div>
       );
   }
 }
-
-class TrialTable extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      activeTab: 0
-    };
-  }
-
-  render() {
-    
-
-    return(
-      <div id="trial-table" className="container-fluid table-bg">
-        <DateMsg />
-        <TabNav />
-        <TabContent />
-        <AverageTimeStat />
-        <AverageVelocityStat />
-      </div>
-      );
-  }
-}
-
 
 export default App;
