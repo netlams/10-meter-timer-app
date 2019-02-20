@@ -1,6 +1,15 @@
 # 10-Meter Timer app
 Technology: ReactJS + BootStrap 3
 
+## Brief Description
+At the top of the app, we have the timer which records up to one decimal place in seconds per the requirements.
+
+To start the timer, user could press/click on either the button (right below it) or directly on the timer dial. Press one to start, and press again to instantly record the data. It is recorded onto the table below the timer.
+
+In the middle, we have the two tabs - one for Self-Selected pace trial recordings and one for the Fast pace trial recordings. Each tab contains a table for the trial data recordings. User could record up to 10 trials. The user could switch between the tabs on a single-click with ease. 
+
+Finally at the bottom, once all the trials are done user could click on the buttons to generate the average velocity and actual time for both datasets.
+
 ----
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
